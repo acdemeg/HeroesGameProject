@@ -22,7 +22,7 @@ public class GameRoom extends Thread {
     private final boolean usePlots;
 
     public GameRoom(final Queue<PlayerSocket> queuePlayers, final int countBattles) {
-        this(queuePlayers, countBattles, false);
+        this(queuePlayers, countBattles, true);
     }
 
     public GameRoom(final Queue<PlayerSocket> queuePlayers, final int countBattles, final boolean usePlots) {

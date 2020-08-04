@@ -111,11 +111,11 @@ public class Analyzer {
             System.out.println("Аномальных результатов нет");
         }
         for (String army : anomalisticResults.keySet()) {
-            System.out.printf("%s%16s%10s%10s\n", army, "win", "draw", "lose");
+            System.out.printf("%-16s%10s%10s%10s\n", army, "win", "draw", "lose");
             for (String secondArmy : anomalisticResults.get(army).keySet()) {
                 List<Double> winRate = anomalisticResults.get(army).get(secondArmy);
                 if (!winRate.isEmpty()) {
-                    System.out.printf("%12s%9.0f%%%9.0f%%%9.0f%% %10d матчей\n", secondArmy, winRate.get(0),
+                    System.out.printf("    %-12s%9.0f%%%9.0f%%%9.0f%% %10d матчей\n", secondArmy, winRate.get(0),
                             winRate.get(1), winRate.get(2), winRate.get(3).longValue());
                 }
             }

@@ -44,11 +44,13 @@ public class Server {
                 } catch (final IOException e) {
                     // Если завершится неудачей, закрывается сокет,
                     // в противном случае, нить закроет его:
+                    e.printStackTrace();
                     socket.close();
                 }
             }
 
         } catch (final Exception e) {
+            e.printStackTrace();
             downService();
         }
     }

@@ -42,7 +42,7 @@ public class AnalyzerTUI {
         strings.add("Что сделать?");
         strings.add("1. Показать аномальные результаты");
         strings.add("2. Показать информацию о паре");
-        strings.add("3. Построит графики пары игроков");
+        strings.add("3. Построить графики пары игроков");
         strings.add("0. Выйти");
         final int option = readAction(strings);
         if (option == 1) {
@@ -87,10 +87,10 @@ public class AnalyzerTUI {
 
         final Map<String, List<Double>> info = analyzer.getAnalyzedInfoAboutPairPlayers(first, second);
         for (final String name : info.keySet()) {
-            System.out.printf("%s%16s%10s%10s\n", name, "win", "draw", "lose");
+            System.out.printf("%-16s%10s%10s%10s\n", name, "win", "draw", "lose");
             final List<Double> winRate = info.get(name);
             if (!winRate.isEmpty()) {
-                System.out.printf("%12s%9.0f%%%9.0f%%%9.0f%% %10d матчей\n", "", winRate.get(0),
+                System.out.printf("%16s%9.0f%%%9.0f%%%9.0f%% %10d матчей\n", "", winRate.get(0),
                         winRate.get(1), winRate.get(2), winRate.get(3).longValue());
             }
         }
@@ -110,7 +110,7 @@ public class AnalyzerTUI {
         }
 
         while (true) {
-            int option = 0;
+            int option;
             try {
                 final String temp = in.nextLine();
                 option = Integer.parseInt(temp);
