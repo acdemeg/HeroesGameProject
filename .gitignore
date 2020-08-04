@@ -22,3 +22,4 @@
 /target/
 
 *.csv
+/src/main/java/com/neolab/heroesGame/client/ai/version/mechanics/

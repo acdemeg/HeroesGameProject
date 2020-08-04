@@ -31,7 +31,7 @@ public class ServerImitation {
 
     public ServerImitation() throws Exception {
         currentPlayer = new ClientPlayerImitation(1, "Bot1");
-        waitingPlayer = ClientPlayerImitation.createHumanPlayerWithAsciiGraphics(2, "Bot2");
+        waitingPlayer = ClientPlayerImitation.createSimpleBotWithAscii(2);
         battleArena = new BattleArena(FactoryArmies.generateArmies(1, 2));
         answerProcessor = new AnswerProcessor(1, 2, battleArena);
         counter = 0;
