@@ -1,4 +1,4 @@
-package com.neolab.heroesGame.client.ai.version.first.minmax;
+package com.neolab.heroesGame.client.ai.version.first;
 
 import com.neolab.heroesGame.aditional.CommonFunction;
 import com.neolab.heroesGame.arena.SquareCoordinate;
@@ -8,6 +8,7 @@ import com.neolab.heroesGame.client.ai.version.mechanics.GameProcessor;
 import com.neolab.heroesGame.client.ai.version.mechanics.arena.Army;
 import com.neolab.heroesGame.client.ai.version.mechanics.arena.BattleArena;
 import com.neolab.heroesGame.client.ai.version.mechanics.heroes.*;
+import com.neolab.heroesGame.client.ai.version.mechanics.trees.MinMaxTree;
 import com.neolab.heroesGame.enumerations.GameEvent;
 import com.neolab.heroesGame.enumerations.HeroActions;
 import com.neolab.heroesGame.errors.HeroExceptions;

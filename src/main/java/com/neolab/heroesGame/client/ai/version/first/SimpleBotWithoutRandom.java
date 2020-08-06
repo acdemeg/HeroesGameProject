@@ -1,4 +1,4 @@
-package com.neolab.heroesGame.client.ai.version.first.withoutrandom;
+package com.neolab.heroesGame.client.ai.version.first;
 
 import com.neolab.heroesGame.aditional.CommonFunction;
 import com.neolab.heroesGame.arena.SquareCoordinate;
@@ -12,6 +12,7 @@ import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Archer;
 import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Healer;
 import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Hero;
 import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Magician;
+import com.neolab.heroesGame.client.ai.version.mechanics.trees.SimulationsTree;
 import com.neolab.heroesGame.enumerations.GameEvent;
 import com.neolab.heroesGame.enumerations.HeroActions;
 import com.neolab.heroesGame.errors.HeroExceptions;
@@ -101,7 +102,7 @@ public class SimpleBotWithoutRandom extends Player {
 
     private int recursiveSimulation(final GameProcessor processor, final SimulationsTree tree) throws HeroExceptions {
         if (tree.isNodeNew()) {
-            final Map<Integer, Answer> actions = getAllAction(processor);
+            final List<Answer> actions = getAllAction(processor);
             tree.fieldNewNode(actions, calculateActionPriority(actions, processor));
         }
         final int actionNumber = chooseAction(tree.getActionPriority());
@@ -135,14 +136,11 @@ public class SimpleBotWithoutRandom extends Player {
         }
     }
 
-    private Map<Integer, Answer> getAllAction(final GameProcessor processor) {
-        final Map<Integer, Answer> actions = new HashMap<>();
-        int counter = 0;
+    private List<Answer> getAllAction(final GameProcessor processor) {
+        final List<Answer> actions = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
             final List<Answer> answers = getHeroAction(processor, coordinateMap.get(i));
-            for (final Answer answer : answers) {
-                actions.put(counter++, answer);
-            }
+            actions.addAll(answers);
         }
         return actions;
     }
@@ -183,12 +181,10 @@ public class SimpleBotWithoutRandom extends Player {
         return answers;
     }
 
-    private @NotNull List<Double> calculateActionPriority(@NotNull final Map<Integer, Answer> actions,
+    private @NotNull List<Double> calculateActionPriority(@NotNull final List<Answer> actions,
                                                           @NotNull final GameProcessor processor) {
         final List<Double> actionPriority = new ArrayList<>();
-        for (int i = 0; i < actions.size(); i++) {
-            actionPriority.add(modificate(actions.get(i), processor));
-        }
+        actions.forEach((action) -> actionPriority.add(modificate(action, processor)));
         return actionPriority;
     }
 

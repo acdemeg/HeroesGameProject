@@ -1,14 +1,12 @@
 package com.neolab.heroesGame.client.ai.server;
 
-import com.neolab.heroesGame.GamingProcess;
 import com.neolab.heroesGame.aditional.CommonFunction;
 import com.neolab.heroesGame.arena.Army;
 import com.neolab.heroesGame.arena.BattleArena;
 import com.neolab.heroesGame.arena.StringArmyFactory;
 import com.neolab.heroesGame.client.ai.Player;
-import com.neolab.heroesGame.client.ai.PlayerBot;
-import com.neolab.heroesGame.client.ai.version.first.minmax.MinMaxBot;
-import com.neolab.heroesGame.client.ai.version.first.withoutrandom.SimpleBotWithoutRandom;
+import com.neolab.heroesGame.client.ai.version.first.MinMaxBot;
+import com.neolab.heroesGame.client.ai.version.first.SimpleBotWithoutRandom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SelfPlayServer {
     public static final Integer NUMBER_TRIES = 10;
     public static final Integer DIFFERENT_ARMIES = 10;
-    private static final Logger LOGGER = LoggerFactory.getLogger(GamingProcess.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SelfPlayServer.class);
     private static final long SEED = 87941;
     private static final Random RANDOM = new Random(SEED);
     private static final AtomicInteger countGame = new AtomicInteger(0);
@@ -32,8 +30,7 @@ public class SelfPlayServer {
 
     public static void main(final String[] args) throws Exception {
         final List<String> armies = CommonFunction.getAllAvailableArmiesCode(6);
-        int counter = 0;
-        final int numbers = armies.size();
+        int counter;
 
         final ThreadGroup threadGroup = new ThreadGroup("matching");
         for (int j = 0; j < DIFFERENT_ARMIES; j++) {

@@ -4,8 +4,7 @@ import com.neolab.heroesGame.arena.Army;
 import com.neolab.heroesGame.client.ai.Player;
 import com.neolab.heroesGame.client.ai.PlayerBot;
 import com.neolab.heroesGame.client.ai.PlayerHuman;
-import com.neolab.heroesGame.client.ai.version.first.SimpleBot;
-import com.neolab.heroesGame.client.ai.version.first.withoutrandom.SimpleBotWithoutRandom;
+import com.neolab.heroesGame.client.ai.version.first.SimpleBotWithoutRandom;
 import com.neolab.heroesGame.client.dto.ClientRequest;
 import com.neolab.heroesGame.client.dto.ExtendedServerResponse;
 import com.neolab.heroesGame.client.gui.IGraphics;
@@ -50,20 +49,9 @@ public class ClientPlayerImitation {
         return new ClientPlayerImitation(human, graphics);
     }
 
-    public static ClientPlayerImitation createSimpleBot(final int playerId) {
-        final Player simpleBot = new SimpleBot(playerId);
-        return new ClientPlayerImitation(simpleBot, new NullGraphics());
-    }
-
     public static ClientPlayerImitation createSimpleBotWithoutRandom(final int playerId) {
         final Player simpleBot = new SimpleBotWithoutRandom(playerId);
         return new ClientPlayerImitation(simpleBot, new NullGraphics());
-    }
-
-    public static ClientPlayerImitation createSimpleBotWithAscii(final int playerId) throws IOException {
-        final IGraphics graphics = new AsciiGraphics(playerId);
-        final Player simpleBot = new SimpleBot(playerId);
-        return new ClientPlayerImitation(simpleBot, graphics);
     }
 
     public static ClientPlayerImitation createCustomPlayer(final int playerId, final String name) throws IOException {
