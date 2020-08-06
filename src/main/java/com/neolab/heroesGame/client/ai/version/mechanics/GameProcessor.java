@@ -1,16 +1,17 @@
 package com.neolab.heroesGame.client.ai.version.mechanics;
 
+import com.neolab.heroesGame.arena.SquareCoordinate;
 import com.neolab.heroesGame.client.ai.version.mechanics.arena.Army;
 import com.neolab.heroesGame.client.ai.version.mechanics.arena.BattleArena;
-import com.neolab.heroesGame.arena.SquareCoordinate;
+import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Hero;
 import com.neolab.heroesGame.enumerations.GameEvent;
 import com.neolab.heroesGame.enumerations.HeroActions;
 import com.neolab.heroesGame.enumerations.HeroErrorCode;
 import com.neolab.heroesGame.errors.HeroExceptions;
-import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Hero;
 import com.neolab.heroesGame.server.answers.Answer;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,13 +24,13 @@ public class GameProcessor {
     private BattleArena board;
 
     public GameProcessor(final int activePlayerId, final BattleArena board) {
-        this.waitingPlayerId = board.getEnemyId(activePlayerId);
+        waitingPlayerId = board.getEnemyId(activePlayerId);
         this.activePlayerId = activePlayerId;
         this.board = board;
     }
 
     public GameProcessor(final int activePlayerId, final BattleArena board, final int roundCounter) {
-        this.waitingPlayerId = board.getEnemyId(activePlayerId);
+        waitingPlayerId = board.getEnemyId(activePlayerId);
         this.activePlayerId = activePlayerId;
         this.board = board;
         this.roundCounter = roundCounter;
@@ -39,7 +40,7 @@ public class GameProcessor {
         return board;
     }
 
-    public void setBoard(BattleArena board) {
+    public void setBoard(final BattleArena board) {
         this.board = board;
     }
 
@@ -60,7 +61,7 @@ public class GameProcessor {
     }
 
     public void swapActivePlayer() {
-        int temp = activePlayerId;
+        final int temp = activePlayerId;
         activePlayerId = waitingPlayerId;
         waitingPlayerId = temp;
     }
@@ -110,11 +111,14 @@ public class GameProcessor {
         } else {
             throw new HeroExceptions(HeroErrorCode.ERROR_ANSWER);
         }
+    }
 
+    public List<Answer> getAllActionsForCurrentPlayer() {
+        return board.getAllActionForPlayer(activePlayerId);
     }
 
     private void tryToKillAll(final Army army) {
-        Set<SquareCoordinate> keys = new HashSet<>(army.getHeroes().keySet());
+        final Set<SquareCoordinate> keys = new HashSet<>(army.getHeroes().keySet());
         keys.forEach(army::tryToKill);
     }
 

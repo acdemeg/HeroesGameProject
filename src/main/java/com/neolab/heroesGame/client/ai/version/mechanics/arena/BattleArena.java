@@ -4,18 +4,19 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.neolab.heroesGame.arena.SquareCoordinate;
+import com.neolab.heroesGame.client.ai.version.mechanics.AnswerValidator;
+import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Archer;
+import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Healer;
 import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Hero;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Magician;
+import com.neolab.heroesGame.enumerations.HeroActions;
+import com.neolab.heroesGame.server.answers.Answer;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+
+import static com.neolab.heroesGame.arena.SquareCoordinate.coordinateDoesntMatters;
 
 public class BattleArena {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(BattleArena.class);
     private final Map<Integer, Army> armies;
 
     @JsonCreator
@@ -23,12 +24,10 @@ public class BattleArena {
         this.armies = armies;
     }
 
-    public static BattleArena createBattleArena(final int firstId, final Army firstArmy,
-                                                final int secondId, final Army secondArmy) {
-        final Map<Integer, Army> armies = new HashMap<>();
-        armies.put(firstId, firstArmy);
-        armies.put(secondId, secondArmy);
-        return new BattleArena(armies);
+    public static BattleArena getCopyFromOriginalClass(final com.neolab.heroesGame.arena.BattleArena arena) {
+        final Map<Integer, Army> clone = new HashMap<>();
+        arena.getArmies().keySet().forEach(key -> clone.put(key, Army.getCopyFromOriginalClasses(arena.getArmy(key))));
+        return new BattleArena(clone);
     }
 
     public Map<Integer, Army> getArmies() {
@@ -37,10 +36,6 @@ public class BattleArena {
 
     public boolean isArmyDied(final int playerId) {
         return armies.get(playerId).getHeroes().isEmpty();
-    }
-
-    public void diedArmy(final int playerId) {
-        armies.get(playerId).getHeroes().clear();
     }
 
     public Army getArmy(final int playerId) {
@@ -79,15 +74,75 @@ public class BattleArena {
         return true;
     }
 
-    public void toLog() {
-        final StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("\n");
-        for (final Integer key : armies.keySet()) {
-            stringBuilder.append(String.format("Армия игрока <%d>: \n", key));
-        }
-        LOGGER.info(stringBuilder.toString());
+    public List<Answer> getAllActionForPlayer(final int playerId) {
+        final List<Answer> actions = new ArrayList<>();
+        getArmy(playerId).getAvailableHeroes().forEach((key, hero) -> actions.addAll(getHeroAction(key, hero, playerId)));
+        return actions;
     }
 
+    /**
+     * Находит все доступные цели для каждого типа юнитов (для хиллера берутся только рененные союзники)
+     *
+     * @param activeHeroCoordinate координаты юнита, для которого ищутся доступные дествия
+     * @param activeHero           юнит, для которого ищутся доступные дествия
+     * @param activePlayerId       id текущего игрока
+     * @return список доступных ходов
+     */
+    private List<Answer> getHeroAction(final SquareCoordinate activeHeroCoordinate,
+                                       final Hero activeHero, final int activePlayerId) {
+        final List<Answer> answers = new ArrayList<>();
+        answers.add(new Answer(activeHeroCoordinate, HeroActions.DEFENCE, coordinateDoesntMatters, activePlayerId));
+
+        if (activeHero instanceof Magician) {
+            answers.add(new Answer(activeHeroCoordinate, HeroActions.ATTACK, coordinateDoesntMatters, activePlayerId));
+
+        } else if (activeHero instanceof Archer) {
+            answers.addAll(getArcherAction(activeHeroCoordinate, activePlayerId));
+
+        } else if (activeHero instanceof Healer) {
+            answers.addAll(getHealAction(activeHeroCoordinate, activePlayerId));
+
+        } else {
+            answers.addAll(getFootFighterAction(activeHeroCoordinate, activePlayerId));
+        }
+        return answers;
+    }
+
+    /**
+     * Формируем ответы для атаки каждого из вражеских юнитов
+     */
+    private List<Answer> getArcherAction(final SquareCoordinate activeHeroCoordinate, final int activePlayerId) {
+        final List<Answer> answers = new ArrayList<>();
+        getEnemyArmy(activePlayerId).getHeroes().keySet()
+                .forEach(target -> answers
+                        .add(new Answer(activeHeroCoordinate, HeroActions.ATTACK, target, activePlayerId)));
+        return answers;
+    }
+
+    /**
+     * Формируем ответы для лечения каждого раненного юнита
+     */
+    private List<Answer> getHealAction(final SquareCoordinate activeHeroCoordinate, final int activePlayerId) {
+        final List<Answer> answers = new ArrayList<>();
+        getArmy(activePlayerId).getHeroes().entrySet().stream()
+                .filter((x -> x.getValue().isInjure()))
+                .map(x -> answers
+                        .add(new Answer(activeHeroCoordinate, HeroActions.HEAL, x.getKey(), activePlayerId)));
+        return answers;
+    }
+
+    /**
+     * Формируем ответы для атаки ближайщих вражеских юнитов
+     */
+    private List<Answer> getFootFighterAction(final SquareCoordinate activeHeroCoordinate, final int activePlayerId) {
+        final List<Answer> answers = new ArrayList<>();
+        AnswerValidator.getCorrectTargetForFootman(activeHeroCoordinate, getEnemyArmy(activePlayerId))
+                .forEach((target -> answers
+                        .add(new Answer(activeHeroCoordinate, HeroActions.ATTACK, target, activePlayerId))));
+        return answers;
+    }
+
+    @Override
     public String toString() {
         final StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("\n");
@@ -96,12 +151,6 @@ public class BattleArena {
             stringBuilder.append(printArmy(armies.get(key)));
         }
         return stringBuilder.toString();
-    }
-
-    public static BattleArena getCopyFromOriginalClass(final com.neolab.heroesGame.arena.BattleArena arena) {
-        final Map<Integer, Army> clone = new HashMap<>();
-        arena.getArmies().keySet().forEach(key -> clone.put(key, Army.getCopyFromOriginalClasses(arena.getArmy(key))));
-        return new BattleArena(clone);
     }
 
     @JsonIgnore

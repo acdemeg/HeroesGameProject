@@ -26,7 +26,9 @@ public class NodeMonteCarlo extends ANode {
 
     @Override
     public ANode createChild(final Answer prevAnswer, final ANode aNode) {
-        return new NodeMonteCarlo(prevAnswer, aNode);
+        final ANode temp = new NodeMonteCarlo(prevAnswer, aNode);
+        getChildren().add(temp);
+        return temp;
     }
 
     public void increase(final GameEvent event) {
@@ -59,7 +61,7 @@ public class NodeMonteCarlo extends ANode {
      * @return возвращает распределение вероятностей для доступных действий
      */
     public List<Double> getActionPriority() {
-        final List<Double> actionPriority = new ArrayList<>(basicActionPriority.size());
+        final List<Double> actionPriority = new ArrayList<>();
         for (int i = 0; i < basicActionPriority.size(); i++) {
             actionPriority.add(basicActionPriority.get(i) + basicActionPriority.get(i) / 100
                     * ((NodeMonteCarlo) getChildren().get(i)).getScorePercent());
