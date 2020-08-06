@@ -25,6 +25,11 @@ public class SelfPlayRoom extends Thread {
     private final BattleArena battleArena;
     private int counter;
 
+    /**
+     * @param arena        арена, в которой содержатся армии с правильным id
+     * @param firstPlayer  игрок, который походит первым в этот матче
+     * @param secondPlayer походит вторым
+     */
     public SelfPlayRoom(final BattleArena arena, final Player firstPlayer, final Player secondPlayer) {
         this.firstPlayer = firstPlayer;
         this.secondPlayer = secondPlayer;
@@ -46,7 +51,6 @@ public class SelfPlayRoom extends Thread {
             if (whoIsWin.isPresent()) {
                 break;
             }
-
             if (!battleArena.canSomeoneAct()) {
                 counter++;
                 if (counter > MAX_ROUND) {
@@ -54,7 +58,6 @@ public class SelfPlayRoom extends Thread {
                 }
                 battleArena.endRound();
             }
-            //Ход игрока
             if (checkCanMove(currentPlayer.getId())) {
                 try {
                     askPlayerProcess();
@@ -62,26 +65,18 @@ public class SelfPlayRoom extends Thread {
                     e.printStackTrace();
                 }
             }
-            //смена активного игрока
             changeCurrentAndWaitingPlayers();
         }
-
-        final GameEvent endMatch;
-        if (whoIsWin.isEmpty()) {
-            endMatch = GameEvent.GAME_END_WITH_A_TIE;
-        } else if (whoIsWin.get().getId() == firstPlayer.getId()) {
-            endMatch = GameEvent.YOU_WIN_GAME;
-        } else {
-            endMatch = GameEvent.YOU_LOSE_GAME;
-        }
-        try {
-            StatisticWriter.writePlayerAnyStatistic(firstPlayer.getName(), secondPlayer.getName(), endMatch);
-            LOGGER.info("{} vs {} = {}", firstPlayer.getName(), secondPlayer.getName(), endMatch.getDescription());
-        } catch (final Exception ex) {
-            ex.printStackTrace();
-        }
+        endMatchActivity();
     }
 
+    /**
+     * Логируем арену, ответ игрока и еффект от его действия.
+     * Запрашиваем у игрока действие и приводим его в исполнение
+     *
+     * @throws HeroExceptions Проблемы с выбором действия (не должны встречаться), неправильный ответ игрока
+     * @throws IOException    Проблемы с отображением картинки для пользователя
+     */
     private void askPlayerProcess() throws HeroExceptions, IOException {
         battleArena.toLog();
         final Answer answer = currentPlayer.getAnswer(battleArena);
@@ -120,5 +115,26 @@ public class SelfPlayRoom extends Thread {
     private void setAnswerProcessorPlayerId(final Player currentPlayer, final Player waitingPlayer) {
         answerProcessor.setActivePlayerId(currentPlayer.getId());
         answerProcessor.setWaitingPlayerId(waitingPlayer.getId());
+    }
+
+    /**
+     * записываем результаты действия в лог и файл для сбора статистики
+     */
+    private void endMatchActivity() {
+        final Optional<Player> whoIsWin = someoneWhoWin();
+        final GameEvent endMatch;
+        if (whoIsWin.isEmpty()) {
+            endMatch = GameEvent.GAME_END_WITH_A_TIE;
+        } else if (whoIsWin.get().getId() == firstPlayer.getId()) {
+            endMatch = GameEvent.YOU_WIN_GAME;
+        } else {
+            endMatch = GameEvent.YOU_LOSE_GAME;
+        }
+        try {
+            StatisticWriter.writePlayerAnyStatistic(firstPlayer.getName(), secondPlayer.getName(), endMatch);
+            LOGGER.info("{} vs {} = {}", firstPlayer.getName(), secondPlayer.getName(), endMatch.getDescription());
+        } catch (final Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }

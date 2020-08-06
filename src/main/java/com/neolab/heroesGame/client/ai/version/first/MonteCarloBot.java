@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class SimpleBotWithoutRandom extends Player {
+public class MonteCarloBot extends Player {
     private static final String BOT_NAME = "Mazaev_v_1_2";
     private static final Logger LOGGER = LoggerFactory.getLogger(PlayerBot.class);
     private final long SEED = 5916;
@@ -34,7 +34,7 @@ public class SimpleBotWithoutRandom extends Player {
     private final SquareCoordinate coordinateDoesntMatters = new SquareCoordinate(-1, -1);
 
 
-    public SimpleBotWithoutRandom(final int id) {
+    public MonteCarloBot(final int id) {
         super(id, BOT_NAME);
         coordinateMap = createCoordinateMap();
         geneticCoefficients = createCoefficient();

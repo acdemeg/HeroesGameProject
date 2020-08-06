@@ -10,7 +10,7 @@ import com.neolab.heroesGame.arena.FactoryArmies;
 import com.neolab.heroesGame.arena.StringArmyFactory;
 import com.neolab.heroesGame.client.ai.Player;
 import com.neolab.heroesGame.client.ai.PlayerBot;
-import com.neolab.heroesGame.client.ai.version.first.SimpleBotWithoutRandom;
+import com.neolab.heroesGame.client.ai.version.first.MonteCarloBot;
 import com.neolab.heroesGame.enumerations.GameEvent;
 import com.neolab.heroesGame.errors.HeroExceptions;
 import com.neolab.heroesGame.server.answers.Answer;
@@ -42,7 +42,7 @@ public class GamingProcess {
     }
 
     public GamingProcess(final BattleArena arena) {
-        currentPlayer = new SimpleBotWithoutRandom(1);
+        currentPlayer = new MonteCarloBot(1);
         waitingPlayer = new PlayerBot(2);
         battleArena = arena;
         answerProcessor = new AnswerProcessor(1, 2, battleArena);
