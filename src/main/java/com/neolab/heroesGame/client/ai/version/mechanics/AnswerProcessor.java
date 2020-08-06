@@ -1,72 +1,32 @@
-package com.neolab.heroesGame.client.ai.version.first;
+package com.neolab.heroesGame.client.ai.version.mechanics;
 
-import com.neolab.heroesGame.arena.Army;
-import com.neolab.heroesGame.arena.BattleArena;
+import com.neolab.heroesGame.client.ai.version.mechanics.arena.Army;
+import com.neolab.heroesGame.client.ai.version.mechanics.arena.BattleArena;
 import com.neolab.heroesGame.arena.SquareCoordinate;
-import com.neolab.heroesGame.enumerations.GameEvent;
 import com.neolab.heroesGame.enumerations.HeroActions;
 import com.neolab.heroesGame.enumerations.HeroErrorCode;
 import com.neolab.heroesGame.errors.HeroExceptions;
-import com.neolab.heroesGame.heroes.Hero;
+import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Hero;
 import com.neolab.heroesGame.server.ActionEffect;
 import com.neolab.heroesGame.server.answers.Answer;
-import com.neolab.heroesGame.validators.AnswerValidator;
+import com.neolab.heroesGame.client.ai.version.mechanics.AnswerValidator;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class GameProcessor {
-    private int roundCounter = 0;
-    private final int MAX_ROUND = 15;
+public final class AnswerProcessor {
+    private final SquareCoordinate coordinateDoesntMatters = new SquareCoordinate(-1, -1);
+
     private int waitingPlayerId;
     private int activePlayerId;
     private final BattleArena board;
-    private ActionEffect actionEffect;
 
-    public GameProcessor(final int activePlayerId, final BattleArena board) {
-        waitingPlayerId = board.getEnemyId(activePlayerId);
+    public AnswerProcessor(final int activePlayerId, final int waitingPlayerId, final BattleArena board) {
+        this.waitingPlayerId = waitingPlayerId;
         this.activePlayerId = activePlayerId;
         this.board = board;
-        actionEffect = null;
-    }
-
-    public GameProcessor(final int activePlayerId, final BattleArena board, final int roundCounter) {
-        waitingPlayerId = board.getEnemyId(activePlayerId);
-        this.activePlayerId = activePlayerId;
-        this.board = board;
-        this.roundCounter = roundCounter;
-    }
-
-    public ActionEffect getActionEffect() {
-        return actionEffect;
-    }
-
-    public BattleArena getBoard() {
-        return board;
-    }
-
-    public Integer getActivePlayerId() {
-        return activePlayerId;
-    }
-
-    public Integer getWaitingPlayerId() {
-        return waitingPlayerId;
-    }
-
-    public Army getActivePlayerArmy() {
-        return board.getArmy(activePlayerId);
-    }
-
-    public Army getWaitingPlayerArmy() {
-        return board.getArmy(waitingPlayerId);
-    }
-
-    public void swapActivePlayer() {
-        final int temp = activePlayerId;
-        activePlayerId = waitingPlayerId;
-        waitingPlayerId = temp;
     }
 
     public void setWaitingPlayerId(final int waitingPlayerId) {
@@ -101,42 +61,30 @@ public class GameProcessor {
                 activeHero.setDefence();
             } else {
                 if (answer.getAction() == HeroActions.ATTACK) {
-                    effectActionMap = activeHero.toAct(answer.getTargetUnitCoordinate(), board.getArmy(waitingPlayerId));
-                    tryToKill(effectActionMap.keySet(), board.getArmy(waitingPlayerId));
+                    activeHero.toAct(answer.getTargetUnitCoordinate(), board.getArmy(waitingPlayerId));
+                    if (answer.getTargetUnitCoordinate().equals(coordinateDoesntMatters)) {
+                        tryToKillAll(board.getArmy(waitingPlayerId));
+                    } else {
+                        tryToKill(answer.getTargetUnitCoordinate(), board.getArmy(waitingPlayerId));
+                    }
                 } else {
-                    effectActionMap = activeHero.toAct(answer.getTargetUnitCoordinate(), board.getArmy(activePlayerId));
+                    activeHero.toAct(answer.getTargetUnitCoordinate(), board.getArmy(activePlayerId));
                 }
             }
 
             removeUsedHero(activePlayerId, activeHero.getUnitId());
-            setActionEffect(answer, effectActionMap);
         } else {
             throw new HeroExceptions(HeroErrorCode.ERROR_ANSWER);
         }
 
     }
 
-    public GameEvent matchOver() {
-        if (board.isArmyDied(waitingPlayerId)) {
-            return GameEvent.YOU_WIN_GAME;
-        } else if (board.isArmyDied(activePlayerId)) {
-            return GameEvent.YOU_LOSE_GAME;
-        } else if (roundCounter >= MAX_ROUND) {
-            return GameEvent.GAME_END_WITH_A_TIE;
-        }
-        if (!board.haveAvailableHeroByArmyId(waitingPlayerId)) {
-            swapActivePlayer();
-        } else if (!board.canSomeoneAct()) {
-            board.endRound();
-            roundCounter++;
-            swapActivePlayer();
-        }
-
-        return GameEvent.NOTHING_HAPPEN;
+    private void tryToKillAll(final Army army) {
+        army.getHeroes().keySet().forEach(army::tryToKill);
     }
 
-    private void tryToKill(final Set<SquareCoordinate> coordinateSet, final Army army) {
-        coordinateSet.forEach(army::tryToKill);
+    private void tryToKill(final SquareCoordinate target, final Army army) {
+        army.tryToKill(target);
     }
 
     private Hero getActiveHero(final BattleArena board, final Answer answer) throws HeroExceptions {
@@ -149,10 +97,6 @@ public class GameProcessor {
 
     private void removeUsedHero(final int activePlayerId, final int heroId) {
         board.removeUsedHeroesById(heroId, activePlayerId);
-    }
-
-    private void setActionEffect(final Answer answer, final Map<SquareCoordinate, Integer> enemyHeroPosDamage) {
-        actionEffect = new ActionEffect(answer.getAction(), answer.getActiveHeroCoordinate(), enemyHeroPosDamage, activePlayerId);
     }
 
 }

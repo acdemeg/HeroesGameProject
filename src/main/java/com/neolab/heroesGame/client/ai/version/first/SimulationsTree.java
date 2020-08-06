@@ -1,6 +1,5 @@
 package com.neolab.heroesGame.client.ai.version.first;
 
-import com.neolab.heroesGame.arena.BattleArena;
 import com.neolab.heroesGame.enumerations.GameEvent;
 import com.neolab.heroesGame.server.answers.Answer;
 
@@ -31,7 +30,7 @@ public class SimulationsTree {
         return false;
     }
 
-    public boolean downToChild(int index) {
+    public boolean downToChild(final int index) {
         final Node temp = currentNode.getChild(index);
         if (temp != null) {
             currentNode = temp;
@@ -51,7 +50,7 @@ public class SimulationsTree {
     }
 
     public double calculatePointsForChild(final int index) {
-        Node child = currentNode.getChild(index);
+        final Node child = currentNode.getChild(index);
         if (child == null) {
             return 0;
         }

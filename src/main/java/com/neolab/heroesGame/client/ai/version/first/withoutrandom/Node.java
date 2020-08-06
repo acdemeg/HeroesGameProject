@@ -1,23 +1,20 @@
-package com.neolab.heroesGame.client.ai.version.first;
+package com.neolab.heroesGame.client.ai.version.first.withoutrandom;
 
-import com.neolab.heroesGame.client.ai.PlayerBot;
 import com.neolab.heroesGame.enumerations.GameEvent;
 import com.neolab.heroesGame.server.answers.Answer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class Node {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PlayerBot.class);
     private final Answer prevAnswer;
     private final Node parent;
     private final List<Node> children;
     private int winCounter;
     private int simulationsCounter;
     private int tiesCounter;
+    private List<Double> basicActionPriority = null;
 
     public Node(final Answer prevAnswer, final Node parent) {
         this.prevAnswer = prevAnswer;
@@ -36,6 +33,10 @@ public class Node {
         return children;
     }
 
+    public void setActionPriority(final List<Double> actionPriority) {
+        basicActionPriority = actionPriority;
+    }
+
     public Node getChild(final int index) {
         if (children.size() <= index) {
             return null;
@@ -43,29 +44,24 @@ public class Node {
         return Optional.ofNullable(children.get(index)).orElse(null);
     }
 
-    public Node createChild(final int index, final Answer prevAnswer) {
+    public void createChild(final int index, final Answer prevAnswer) {
         final Node child = new Node(prevAnswer, this);
         for (int i = children.size(); i <= index; i++) {
             children.add(null);
         }
         children.set(index, child);
-        return child;
     }
 
     public Node getParent() {
         return parent;
     }
 
-    public int getWinCounter() {
-        return winCounter;
+    public int getScorePercent() {
+        return simulationsCounter != 0 ? ((100 * (winCounter + tiesCounter / 2)) / simulationsCounter) : 0;
     }
 
-    public int getSimulationsCounter() {
-        return simulationsCounter;
-    }
-
-    public int getTiesCounter() {
-        return tiesCounter;
+    public boolean isNewNode() {
+        return children.isEmpty();
     }
 
     public void increase(final GameEvent event) {
@@ -77,7 +73,22 @@ public class Node {
         simulationsCounter++;
     }
 
-    public int getScorePercent() {
-        return (100 * (winCounter + tiesCounter / 2)) / simulationsCounter;
+    public List<Double> getActionPriorityForChoose() {
+        final List<Double> actionPriority = new ArrayList<>(basicActionPriority.size());
+        double priority = 0d;
+        for (int i = 0; i < basicActionPriority.size(); i++) {
+            priority += basicActionPriority.get(i) + basicActionPriority.get(i) / 100 * children.get(i).getScorePercent();
+            actionPriority.add(priority);
+        }
+        return actionPriority;
+    }
+
+    public List<Double> getActionPriority() {
+        final List<Double> actionPriority = new ArrayList<>(basicActionPriority.size());
+        for (int i = 0; i < basicActionPriority.size(); i++) {
+            actionPriority.add(basicActionPriority.get(i) + basicActionPriority.get(i) / 100 * children.get(i).getScorePercent());
+        }
+        return actionPriority;
     }
 }
+

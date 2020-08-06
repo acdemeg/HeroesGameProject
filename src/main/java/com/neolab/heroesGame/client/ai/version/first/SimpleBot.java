@@ -33,7 +33,7 @@ public class SimpleBot extends Player {
     }
 
     private Map<Integer, SquareCoordinate> createCoordinateMap() {
-        Map<Integer, SquareCoordinate> coordinateMap = new HashMap<>();
+        final Map<Integer, SquareCoordinate> coordinateMap = new HashMap<>();
         coordinateMap.put(0, new SquareCoordinate(0, 0));
         coordinateMap.put(1, new SquareCoordinate(1, 0));
         coordinateMap.put(2, new SquareCoordinate(2, 0));
@@ -45,8 +45,8 @@ public class SimpleBot extends Player {
 
     @Override
     public Answer getAnswer(final BattleArena board) throws HeroExceptions {
-        long startTime = System.currentTimeMillis();
-        SimulationsTree tree = new SimulationsTree();
+        final long startTime = System.currentTimeMillis();
+        final SimulationsTree tree = new SimulationsTree();
         for (int i = 0; ; i++) {
             if (System.currentTimeMillis() - startTime > 1000) {
                 LOGGER.info("Количество симуляций за {}мс: {}", System.currentTimeMillis() - startTime, i);
@@ -72,12 +72,12 @@ public class SimpleBot extends Player {
         return getStringArmyFirst(armySize);
     }
 
-    private int recursiveSimulation(GameProcessor processor, SimulationsTree tree) throws HeroExceptions {
+    private int recursiveSimulation(final GameProcessor processor, final SimulationsTree tree) throws HeroExceptions {
         //LOGGER.trace(processor.getBoard().toString());
         //LOGGER.trace("Active: {}, waiting: {}", processor.getActivePlayerId(), processor.getWaitingPlayerId());
-        Map<Integer, Answer> actions = getAllAction(processor);
+        final Map<Integer, Answer> actions = getAllAction(processor);
         //LOGGER.trace("Количество действий: {}", actions.size());
-        Map<Integer, Double> actionPriority = calculateActionPriority(actions, processor, tree);
+        final Map<Integer, Double> actionPriority = calculateActionPriority(actions, tree);
         final int actionNumber = chooseAction(actionPriority);
         processor.handleAnswer(actions.get(actionNumber));
         final GameEvent event = processor.matchOver();
@@ -116,12 +116,12 @@ public class SimpleBot extends Player {
         return processor.getWaitingPlayerId();
     }
 
-    private Map<Integer, Answer> getAllAction(GameProcessor processor) {
-        Map<Integer, Answer> actions = new HashMap<>();
+    private Map<Integer, Answer> getAllAction(final GameProcessor processor) {
+        final Map<Integer, Answer> actions = new HashMap<>();
         int counter = 0;
         for (int i = 0; i < 6; i++) {
-            List<Answer> answers = getHeroAction(processor, coordinateMap.get(i));
-            for (Answer answer : answers) {
+            final List<Answer> answers = getHeroAction(processor, coordinateMap.get(i));
+            for (final Answer answer : answers) {
                 actions.put(counter++, answer);
                 //LOGGER.trace("{}: {}", counter - 1, answer.toString());
             }
@@ -129,54 +129,55 @@ public class SimpleBot extends Player {
         return actions;
     }
 
-    private List<Answer> getHeroAction(GameProcessor processor, SquareCoordinate coordinate) {
+    private List<Answer> getHeroAction(final GameProcessor processor, final SquareCoordinate coordinate) {
         final Army currentArmy = processor.getActivePlayerArmy();
         final Army enemyArmy = processor.getWaitingPlayerArmy();
         final Integer activePlayerId = processor.getActivePlayerId();
-        Hero hero = currentArmy.getAvailableHeroes().get(coordinate);
+        final Hero hero = currentArmy.getAvailableHeroes().get(coordinate);
 
         if (hero == null) {
             return Collections.emptyList();
         }
 
-        List<Answer> answers = new ArrayList<>();
-        answers.add(new Answer(coordinate, HeroActions.DEFENCE, coordinateDoesntMatters, activePlayerId));
+        final List<Answer> answers = new ArrayList<>();
 
         if (hero instanceof Magician) {
             answers.add(new Answer(coordinate, HeroActions.ATTACK, coordinateDoesntMatters, activePlayerId));
 
         } else if (hero instanceof Archer) {
-            for (SquareCoordinate enemyCoordinate : enemyArmy.getHeroes().keySet()) {
+            for (final SquareCoordinate enemyCoordinate : enemyArmy.getHeroes().keySet()) {
                 answers.add(new Answer(coordinate, HeroActions.ATTACK, enemyCoordinate, activePlayerId));
             }
 
         } else if (hero instanceof Healer) {
-            for (SquareCoordinate alliesCoordinate : currentArmy.getHeroes().keySet()) {
+            for (final SquareCoordinate alliesCoordinate : currentArmy.getHeroes().keySet()) {
                 if (currentArmy.getHero(alliesCoordinate).get().isInjure()) {
                     answers.add(new Answer(coordinate, HeroActions.HEAL, alliesCoordinate, activePlayerId));
                 }
             }
 
         } else {
-            for (SquareCoordinate enemyCoordinate : CommonFunction.getCorrectTargetForFootman(coordinate, enemyArmy)) {
+            for (final SquareCoordinate enemyCoordinate : CommonFunction.getCorrectTargetForFootman(coordinate, enemyArmy)) {
                 answers.add(new Answer(coordinate, HeroActions.ATTACK, enemyCoordinate, activePlayerId));
             }
         }
+        answers.add(new Answer(coordinate, HeroActions.DEFENCE, coordinateDoesntMatters, activePlayerId));
         return answers;
     }
 
-    private Map<Integer, Double> calculateActionPriority(Map<Integer, Answer> actions, GameProcessor processor, SimulationsTree tree) {
-        Map<Integer, Double> actionPriority = new HashMap<>();
-        actionPriority.put(0, 0.5 + tree.calculatePointsForChild(0));
-        //LOGGER.trace("0: {}", actionPriority.get(0));
-        for (int i = 1; i < actions.size(); i++) {
-            actionPriority.put(i, 0.5 + 0.2 * tree.calculatePointsForChild(i) + actionPriority.get(i - 1));
-            //LOGGER.trace("{}: {}", i, actionPriority.get(i));
+    private Map<Integer, Double> calculateActionPriority(final Map<Integer, Answer> actions,
+                                                         final SimulationsTree tree) {
+        final Map<Integer, Double> actionPriority = new HashMap<>();
+        double priority = 0.0;
+        for (int i = 0; i < actions.size(); i++) {
+            priority += (0.5 + 0.2 * tree.calculatePointsForChild(i))
+                    * (actions.get(i).getAction() == HeroActions.DEFENCE ? 0.5 : 1.5);
+            actionPriority.put(i, priority);
         }
         return actionPriority;
     }
 
-    private int chooseAction(Map<Integer, Double> actionPriority) {
+    private int chooseAction(final Map<Integer, Double> actionPriority) {
         final Double random = RANDOM.nextDouble() * actionPriority.get(actionPriority.size() - 1);
         //LOGGER.trace("RANDOM: {}", random);
         for (int i = 0; i < actionPriority.size(); i++) {
@@ -184,24 +185,17 @@ public class SimpleBot extends Player {
                 return i;
             }
         }
-        //LOGGER.trace("WTF!!!");
-        for (int i = 0; i < actionPriority.size(); i++) {
-            //LOGGER.trace("RANDOM: {}, Action: {}", random, actionPriority.get(i));
-        }
         return 0;
     }
 
-    private Answer answerFromTree(GameProcessor processor, SimulationsTree tree) {
-        Map<Integer, Answer> actions = getAllAction(processor);
-        List<Node> nodes = tree.getChildren();
+    private Answer answerFromTree(final GameProcessor processor, final SimulationsTree tree) {
+        final Map<Integer, Answer> actions = getAllAction(processor);
+        final List<Node> nodes = tree.getChildren();
         int counter = -1;
         for (int i = 0; i < nodes.size(); i++) {
-            Node temp = nodes.get(i);
+            final Node temp = nodes.get(i);
             if (temp != null) {
-                if (counter == -1) {
-                    counter = i;
-                }
-                if (nodes.get(i).getSimulationsCounter() > nodes.get(counter).getSimulationsCounter()) {
+                if (counter == -1 || nodes.get(i).getSimulationsCounter() > nodes.get(counter).getSimulationsCounter()) {
                     counter = i;
                 }
                 //LOGGER.trace("{}: {}", i, actions.get(i).toString());

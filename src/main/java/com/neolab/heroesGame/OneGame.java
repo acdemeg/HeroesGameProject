@@ -1,18 +1,14 @@
 package com.neolab.heroesGame;
 
-import com.neolab.heroesGame.aditional.Analyzer;
 import com.neolab.heroesGame.aditional.CommonFunction;
-import com.neolab.heroesGame.aditional.StatisticWriter;
-import com.neolab.heroesGame.aditional.plotters.DynamicPlotter;
-import com.neolab.heroesGame.aditional.plotters.MathDraw;
 import com.neolab.heroesGame.arena.Army;
 import com.neolab.heroesGame.arena.BattleArena;
-import com.neolab.heroesGame.arena.FactoryArmies;
 import com.neolab.heroesGame.arena.StringArmyFactory;
 import com.neolab.heroesGame.client.ai.Player;
 import com.neolab.heroesGame.client.ai.PlayerBot;
 import com.neolab.heroesGame.client.ai.version.first.SimpleBot;
-import com.neolab.heroesGame.enumerations.GameEvent;
+import com.neolab.heroesGame.client.ai.version.first.minmax.MinMaxBot;
+import com.neolab.heroesGame.client.ai.version.first.withoutrandom.SimpleBotWithoutRandom;
 import com.neolab.heroesGame.errors.HeroExceptions;
 import com.neolab.heroesGame.server.answers.Answer;
 import com.neolab.heroesGame.server.answers.AnswerProcessor;
@@ -24,7 +20,6 @@ import java.util.*;
 
 public class OneGame {
     public static final Integer MAX_ROUND = 15;
-    public static final Integer NUMBER_TRIES = 100;
     private static final Logger LOGGER = LoggerFactory.getLogger(OneGame.class);
     private static final long SEED = 5916;
     private static final Random RANDOM = new Random(SEED);
@@ -35,8 +30,8 @@ public class OneGame {
     private int counter;
 
     public OneGame(final BattleArena arena) {
-        currentPlayer = new PlayerBot(1, "Bot1");
-        waitingPlayer = new SimpleBot(2);
+        currentPlayer = new PlayerBot(1);
+        waitingPlayer = new MinMaxBot(2);
         battleArena = arena;
         answerProcessor = new AnswerProcessor(1, 2, battleArena);
         counter = 0;
@@ -59,14 +54,13 @@ public class OneGame {
     }
 
     private static void matches() throws Exception {
-        List<String> armies = CommonFunction.getAllAvailableArmiesCode(6);
+        final List<String> armies = CommonFunction.getAllAvailableArmiesCode(6);
         final long startTime = System.currentTimeMillis();
 
         final Army firstArmy = new StringArmyFactory(armies.get(RANDOM.nextInt(armies.size()))).create();
-        final Army secondArmy = new StringArmyFactory(armies.get(RANDOM.nextInt(armies.size()))).create();
         final Map<Integer, Army> mapArmies = new HashMap<>();
-        mapArmies.put(1, firstArmy);
-        mapArmies.put(2, secondArmy);
+        mapArmies.put(2, firstArmy);
+        mapArmies.put(1, firstArmy.getCopy());
         final BattleArena arena = new BattleArena(mapArmies);
         final OneGame gamingProcess = new OneGame(arena);
         System.out.println("Партия началась");
@@ -82,8 +76,6 @@ public class OneGame {
             if (!gamingProcess.battleArena.canSomeoneAct()) {
                 gamingProcess.counter++;
                 if (gamingProcess.counter > MAX_ROUND) {
-                    StatisticWriter.writePlayerDrawStatistic(gamingProcess.currentPlayer.getName(),
-                            gamingProcess.waitingPlayer.getName());
                     break;
                 }
                 gamingProcess.battleArena.endRound();
