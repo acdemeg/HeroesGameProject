@@ -6,6 +6,7 @@ import com.neolab.heroesGame.server.answers.Answer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class NodeMonteCarlo extends ANode {
     private int winCounter;
@@ -73,4 +74,20 @@ public class NodeMonteCarlo extends ANode {
         return simulationsCounter != 0 ? ((100 * (winCounter + tiesCounter / 2)) / simulationsCounter) : 0;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        NodeMonteCarlo that = (NodeMonteCarlo) o;
+        return winCounter == that.winCounter &&
+                simulationsCounter == that.simulationsCounter &&
+                tiesCounter == that.tiesCounter &&
+                Objects.equals(basicActionPriority, that.basicActionPriority);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), winCounter, simulationsCounter, tiesCounter, basicActionPriority);
+    }
 }

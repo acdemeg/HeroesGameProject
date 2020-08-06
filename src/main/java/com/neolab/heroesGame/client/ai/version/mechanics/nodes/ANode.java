@@ -4,6 +4,7 @@ import com.neolab.heroesGame.server.answers.Answer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -51,4 +52,18 @@ public abstract class ANode {
 
     public abstract ANode createChild(final Answer prevAnswer, final ANode aNode);
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ANode aNode = (ANode) o;
+        return Objects.equals(prevAnswer, aNode.prevAnswer) &&
+                Objects.equals(parent, aNode.parent) &&
+                Objects.equals(children, aNode.children);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(prevAnswer, parent, children);
+    }
 }

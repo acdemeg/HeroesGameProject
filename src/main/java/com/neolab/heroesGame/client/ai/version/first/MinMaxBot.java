@@ -7,6 +7,7 @@ import com.neolab.heroesGame.client.ai.version.mechanics.arena.Army;
 import com.neolab.heroesGame.client.ai.version.mechanics.arena.BattleArena;
 import com.neolab.heroesGame.client.ai.version.mechanics.heroes.IWarlord;
 import com.neolab.heroesGame.client.ai.version.mechanics.heroes.Magician;
+import com.neolab.heroesGame.client.ai.version.mechanics.nodes.ANode;
 import com.neolab.heroesGame.client.ai.version.mechanics.trees.MinMaxTree;
 import com.neolab.heroesGame.enumerations.GameEvent;
 import com.neolab.heroesGame.errors.HeroExceptions;
@@ -34,7 +35,7 @@ public class MinMaxBot extends Player {
         final long startTime = System.currentTimeMillis();
         final BattleArena arena = BattleArena.getCopyFromOriginalClass(board);
         final MinMaxTree tree = new MinMaxTree();
-        final GameProcessor processor = new GameProcessor(arena.getEnemyId(getId()), arena.getCopy());
+        final GameProcessor processor = new GameProcessor(getId(), arena.getCopy());
         recursiveSimulation(processor, tree, Integer.MAX_VALUE);
         LOGGER.info("На обход дерева глубиной {} потрачено {}мс", MAX_DEPTH, System.currentTimeMillis() - startTime);
         return tree.getBestHeuristicAnswer();
@@ -51,28 +52,28 @@ public class MinMaxBot extends Player {
         return getStringArmyFirst(armySize);
     }
 
+    /**
+     * Рекурсивная функция - строит симуляционное дерево заданной глубины.
+     *
+     * @param tree          текущее дерево
+     * @param prevHeuristic текущее значение эвристики уровнем выше
+     * @return эвристику либо терминального узла, либо узла с максимальной глубины
+     */
     private int recursiveSimulation(final GameProcessor processor, final MinMaxTree tree,
                                     final int prevHeuristic) throws HeroExceptions {
-        final GameEvent event = processor.matchOver();
-        if (tree.isMaxDepth(MAX_DEPTH) || event != GameEvent.NOTHING_HAPPEN) {
+        if (tree.isMaxDepth(MAX_DEPTH) || processor.matchOver() != GameEvent.NOTHING_HAPPEN) {
             final int heuristic = calculateHeuristic(processor.getBoard());
             tree.setHeuristic(heuristic);
             return heuristic;
         }
+
         final boolean isItThisBot = processor.getActivePlayerId() == getId();
-        final List<Answer> actions = processor.getAllActionsForCurrentPlayer();
-        tree.createAllChildren(actions);
+        tree.createAllChildren(processor.getAllActionsForCurrentPlayer());
         final BattleArena arena = processor.getBoard().getCopy();
         int heuristic = isItThisBot ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-        for (int i = 0; i < actions.size(); i++) {
-            processor.handleAnswer(actions.get(i));
-            tree.downToChild(i);
-            final int nodeHeuristic = recursiveSimulation(processor, tree, heuristic);
-            if ((isItThisBot && processor.getActivePlayerId() != getId())
-                    || (!isItThisBot && processor.getActivePlayerId() == getId())) {
-                processor.swapActivePlayer();
-            }
-            tree.upToParent();
+
+        for (final ANode node : tree.getCurrentNode().getChildren()) {
+            final int nodeHeuristic = goDownToChild(processor, tree, prevHeuristic, node);
             if (isItThisBot ? prevHeuristic < nodeHeuristic : prevHeuristic > nodeHeuristic) {
                 tree.setHeuristic(nodeHeuristic);
                 return nodeHeuristic;
@@ -82,13 +83,45 @@ public class MinMaxBot extends Player {
             }
             processor.setBoard(arena.getCopy());
         }
+
         tree.setHeuristic(heuristic);
         return heuristic;
     }
 
+    /**
+     * В функции спускаемся вниз в следующий узел. Перед этим выполняем действие, которое приводит к этому узлу
+     * Если после возвращения назад id игрока отличается, то меняем текущего и ждущего игроков
+     */
+    private int goDownToChild(final GameProcessor processor, final MinMaxTree tree,
+                              final int prevHeuristic, final ANode child) throws HeroExceptions {
+        final int currentPlayerId = processor.getActivePlayerId();
+        processor.handleAnswer(child.getPrevAnswer());
+        tree.downToChild(child);
+        final int nodeHeuristic = recursiveSimulation(processor, tree, prevHeuristic);
+        tree.upToParent();
+        if (currentPlayerId != processor.getActivePlayerId()) {
+            processor.swapActivePlayer();
+        }
+        return nodeHeuristic;
+    }
+
+    /**
+     * вычисление эвристики:
+     * ценность юнита представляет собой сумму текущего здоровья юнита, умноженную на ожидаемый урон
+     * для повышения ценности убийства юнитов и ценности сохранения юнита в живых добавляем его максимальное здоровье,
+     * умноженное на его урон;
+     * для варлордов даем еще сверху 4000 очков ценности
+     */
     private int calculateHeuristic(final BattleArena arena) {
         final Army botArmy = arena.getArmy(getId());
         final Army enemyArmy = arena.getEnemyArmy(getId());
+        if (botArmy.getHeroes().isEmpty()) {
+            return Integer.MIN_VALUE;
+        }
+        if (enemyArmy.getHeroes().isEmpty()) {
+            return Integer.MAX_VALUE;
+        }
+
         final AtomicInteger heuristic = new AtomicInteger(0);
         botArmy.getHeroes().values().forEach(hero -> {
             final int delta = hero.getDamage() * hero.getHp() * (hero instanceof Magician ? enemyArmy.getHeroes().size() : 1)

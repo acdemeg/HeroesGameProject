@@ -18,7 +18,7 @@ import java.util.Set;
 public class GameProcessor {
     private final SquareCoordinate coordinateDoesntMatters = new SquareCoordinate(-1, -1);
     private int roundCounter = 0;
-    private final int MAX_ROUND = 15;
+    private static final int MAX_ROUND = 15;
     private int waitingPlayerId;
     private int activePlayerId;
     private BattleArena board;
@@ -48,10 +48,6 @@ public class GameProcessor {
         return activePlayerId;
     }
 
-    public Integer getWaitingPlayerId() {
-        return waitingPlayerId;
-    }
-
     public Army getActivePlayerArmy() {
         return board.getArmy(activePlayerId);
     }
@@ -64,14 +60,6 @@ public class GameProcessor {
         final int temp = activePlayerId;
         activePlayerId = waitingPlayerId;
         waitingPlayerId = temp;
-    }
-
-    public void setWaitingPlayerId(final int waitingPlayerId) {
-        this.waitingPlayerId = waitingPlayerId;
-    }
-
-    public void setActivePlayerId(final int activePlayerId) {
-        this.activePlayerId = activePlayerId;
     }
 
     /**
@@ -87,30 +75,47 @@ public class GameProcessor {
      */
     public void handleAnswer(final Answer answer) throws HeroExceptions {
         if (AnswerValidator.isAnswerValidate(answer, board)) {
-            final Hero activeHero = getActiveHero(board, answer);
-
-            if (activeHero.isDefence()) {
-                activeHero.cancelDefence();
-            }
-            if (answer.getAction() == HeroActions.DEFENCE) {
-                activeHero.setDefence();
-            } else {
-                if (answer.getAction() == HeroActions.ATTACK) {
-                    activeHero.toAct(answer.getTargetUnitCoordinate(), board.getArmy(waitingPlayerId));
-                    if (answer.getTargetUnitCoordinate().equals(coordinateDoesntMatters)) {
-                        tryToKillAll(board.getArmy(waitingPlayerId));
-                    } else {
-                        tryToKill(answer.getTargetUnitCoordinate(), board.getArmy(waitingPlayerId));
-                    }
-                } else {
-                    activeHero.toAct(answer.getTargetUnitCoordinate(), board.getArmy(activePlayerId));
-                }
-            }
-
-            removeUsedHero(activePlayerId, activeHero.getUnitId());
+            toAct(answer);
         } else {
             throw new HeroExceptions(HeroErrorCode.ERROR_ANSWER);
         }
+        if (board.haveAvailableHeroByArmyId(waitingPlayerId)) {
+            swapActivePlayer();
+        } else if (board.noOneCanAct()) {
+            board.endRound();
+            roundCounter++;
+            swapActivePlayer();
+        }
+    }
+
+    /**
+     * Применяем выбранное игроком действие
+     */
+    private void toAct(Answer answer) throws HeroExceptions {
+        final Hero activeHero = getActiveHero(board, answer);
+
+        if (activeHero.isDefence()) {
+            activeHero.cancelDefence();
+        }
+
+        if (answer.getAction() == HeroActions.DEFENCE) {
+            activeHero.setDefence();
+
+        } else {
+            if (answer.getAction() == HeroActions.ATTACK) {
+                activeHero.toAct(answer.getTargetUnitCoordinate(), board.getArmy(waitingPlayerId));
+
+                if (answer.getTargetUnitCoordinate().equals(coordinateDoesntMatters)) {
+                    tryToKillAll(board.getArmy(waitingPlayerId));
+                } else {
+                    tryToKill(answer.getTargetUnitCoordinate(), board.getArmy(waitingPlayerId));
+                }
+
+            } else {
+                activeHero.toAct(answer.getTargetUnitCoordinate(), board.getArmy(activePlayerId));
+            }
+        }
+        removeUsedHero(activePlayerId, activeHero.getUnitId());
     }
 
     public List<Answer> getAllActionsForCurrentPlayer() {
@@ -134,14 +139,6 @@ public class GameProcessor {
         } else if (roundCounter >= MAX_ROUND) {
             return GameEvent.GAME_END_WITH_A_TIE;
         }
-        if (board.haveAvailableHeroByArmyId(waitingPlayerId)) {
-            swapActivePlayer();
-        } else if (board.noOneCanAct()) {
-            board.endRound();
-            roundCounter++;
-            swapActivePlayer();
-        }
-
         return GameEvent.NOTHING_HAPPEN;
     }
 

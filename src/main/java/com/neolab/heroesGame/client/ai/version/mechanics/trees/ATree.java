@@ -3,6 +3,8 @@ package com.neolab.heroesGame.client.ai.version.mechanics.trees;
 import com.neolab.heroesGame.client.ai.version.mechanics.nodes.ANode;
 import com.neolab.heroesGame.server.answers.Answer;
 
+import java.util.Objects;
+
 public abstract class ATree {
     private final ANode root;
     private ANode currentNode;
@@ -41,6 +43,15 @@ public abstract class ATree {
         return false;
     }
 
+    public boolean downToChild(final ANode node) {
+        if (node != null && currentNode.equals(node.getParent())) {
+            currentNode = node;
+            return true;
+        }
+        //Никогда не должно происходить. Если произошло, значит есть ошибка в программе
+        throw new AssertionError();
+    }
+
     public boolean isNodeNew() {
         return currentNode.isNewNode();
     }
@@ -51,5 +62,19 @@ public abstract class ATree {
 
     public Answer getAnswer(final int actionNumber) {
         return currentNode.getChild(actionNumber).getPrevAnswer();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ATree aTree = (ATree) o;
+        return Objects.equals(root, aTree.root) &&
+                Objects.equals(currentNode, aTree.currentNode);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(root, currentNode);
     }
 }

@@ -2,6 +2,8 @@ package com.neolab.heroesGame.client.ai.version.mechanics.nodes;
 
 import com.neolab.heroesGame.server.answers.Answer;
 
+import java.util.Objects;
+
 public class NodeMinMax extends ANode {
     private final int depth;
     private int heuristic = Integer.MIN_VALUE;
@@ -31,5 +33,20 @@ public class NodeMinMax extends ANode {
 
     public void setHeuristic(final int heuristic) {
         this.heuristic = heuristic;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        NodeMinMax that = (NodeMinMax) o;
+        return depth == that.depth &&
+                heuristic == that.heuristic;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), depth, heuristic);
     }
 }
