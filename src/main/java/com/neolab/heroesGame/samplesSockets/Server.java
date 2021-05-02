@@ -24,6 +24,7 @@ public class Server {
 
     private static void startServer() throws IOException {
         LOGGER.warn("Server started, port: {}", PORT);
+        System.out.println("Server started, port: " + PORT);
         try (final ServerSocket serverSocket = new ServerSocket(PORT)) {
 
             while (true) {
@@ -90,7 +91,7 @@ public class Server {
 
         if (countGameRooms.get() < props.MAX_COUNT_GAME_ROOMS && queuePlayers.size() >= 2) {
             countGameRooms.incrementAndGet();
-            new GameRoom(queuePlayers, props.MAX_COUNT_BATTLES).start();
+            new GameRoom(queuePlayers, props.MAX_COUNT_BATTLES, true).start();
         }
     }
 

@@ -6,7 +6,7 @@
 
     <groupId>neolab</groupId>
     <artifactId>Heroes_Game</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <build>
         <plugins>
             <plugin>
@@ -16,6 +16,33 @@
                 <configuration>
                     <release>14</release>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>com.neolab.heroesGame.samplesSockets.Server</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration> </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -51,11 +78,6 @@
             <version>3.0.3</version>
         </dependency>
         <dependency>
-            <groupId>com.github.yannrichet</groupId>
-            <artifactId>JMathPlot</artifactId>
-            <version>1.0.1</version>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
@@ -82,6 +104,11 @@
             <artifactId>annotations</artifactId>
             <version>18.0.0</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.yannrichet</groupId>
+            <artifactId>JMathPlot</artifactId>
+            <version>1.0.1</version>
         </dependency>
     </dependencies>
     <properties>
