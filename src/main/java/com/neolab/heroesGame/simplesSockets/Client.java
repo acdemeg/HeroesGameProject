@@ -1,4 +1,4 @@
-package com.neolab.heroesGame.samplesSockets;
+package com.neolab.heroesGame.simplesSockets;
 
 import com.neolab.heroesGame.ClientPlayerImitation;
 import com.neolab.heroesGame.arena.StringArmyFactory;

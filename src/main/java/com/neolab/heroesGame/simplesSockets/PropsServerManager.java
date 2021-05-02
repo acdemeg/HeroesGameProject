@@ -1,4 +1,4 @@
-package com.neolab.heroesGame.samplesSockets;
+package com.neolab.heroesGame.simplesSockets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
