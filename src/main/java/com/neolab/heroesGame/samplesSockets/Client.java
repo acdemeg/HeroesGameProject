@@ -19,7 +19,7 @@ import java.util.Scanner;
 public class Client {
 
     private static final String IP = "127.0.0.1";//"localhost";
-    private static final int PORT = 8081;
+    private static final int PORT = 8090;
     private static final SimpleDateFormat DATE_FORMAT = PlayerSocket.DATE_FORMAT;
 
     private final String ip; // ip адрес клиента
@@ -135,9 +135,10 @@ public class Client {
         send(player.getPlayerName());
         final String res = in.readLine();
         // на сервере уже максимально число игроков
-        if (res.equals(GameEvent.MAX_COUNT_PLAYERS.toString())) {
-            return false;
-        }
+        if(res != null)
+            if (res.equals(GameEvent.MAX_COUNT_PLAYERS.toString())) {
+                return false;
+            }
         final int playerId = Integer.parseInt(res);
         player.setPlayerId(playerId);
         send(GameEvent.CLIENT_IS_CREATED.toString());

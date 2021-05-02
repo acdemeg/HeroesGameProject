@@ -91,7 +91,7 @@ public class Server {
 
         if (countGameRooms.get() < props.MAX_COUNT_GAME_ROOMS && queuePlayers.size() >= 2) {
             countGameRooms.incrementAndGet();
-            new GameRoom(queuePlayers, props.MAX_COUNT_BATTLES, true).start();
+            new GameRoom(queuePlayers, props.MAX_COUNT_BATTLES, false).start();
         }
     }
 
